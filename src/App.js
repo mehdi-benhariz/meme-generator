@@ -1,15 +1,23 @@
 import React,{useState} from 'react';
-import './App.css';
-import Meme from './components/Meme';
+import Memes from './components/Memes';
+import {MDBNavbar,MDBNavbarBrand,MDBNavbarNav } from "mdbreact";
+import FooterPage from "./components/FooterPage";
 
 function App() {
   const [page, setpage] = useState(0);
   return (
     <div className="App">
-     <Meme page={page} setpage={setpage} />
-     <button onClick={()=>page>=0?setpage(page-1):null} >Previous</button>
-                 {page+1}
-      <button onClick={()=>page<100?setpage(page+1):null} >Next</button>
+      <MDBNavbar color="primary-color"  expand="lg" id="nav" >
+      <MDBNavbarBrand>
+          <strong className="white-text">Memes for life! :) </strong>
+        </MDBNavbarBrand>
+        <MDBNavbarNav  right>
+        <a className="white-text" href="#footer">see more about me</a>
+        </MDBNavbarNav>
+
+        </MDBNavbar>
+     <Memes page={page} setpage={setpage} />
+ <FooterPage  />
     </div>
   );
 }
