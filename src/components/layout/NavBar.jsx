@@ -11,8 +11,8 @@ const NavBar = () => {
                 <h2 class="text-white font-bold  ">Memes For Life :) </h2>
               </a>
             </li>
-            <li  class="inline-block align-middle right-2 md:absolute lg:absolute ">
-              <a href="/" >
+            <li  class="inline-block align-middle pr-2 right-2 md:absolute lg:absolute ">
+              <a href="/https://www.linkedin.com/in/mehdi-ben-hariz/" target="_blanked" >
                 <h2 class="text-white font-bold">
                   Know more about me!
                 </h2>

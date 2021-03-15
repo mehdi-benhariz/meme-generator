@@ -24,7 +24,7 @@ const Memes = ({ page, setpage }) => {
     return res.json();
   };
   //using hook to fetch memes
-  let { resolvedData, latestData, status } = usePaginatedQuery(
+  let { resolvedData, status } = usePaginatedQuery(
     ["Meme", page],
     fetchMeme,
     {
@@ -51,17 +51,17 @@ const Memes = ({ page, setpage }) => {
     formData.append("username", process.env.REACT_APP_IMGFLIP_USERNAME);
     formData.append("password", process.env.REACT_APP_IMGFLIP_PASSWORD);
     formData.append("template_id", currentMeme.id);
-    if(captions.length===0)
-    console.log("")
-      else{
+  
         captions.forEach((c, index) => formData.append(`boxes[${index}][text]`, c));
         fetch("https://api.imgflip.com/caption_image", {
           method: "POST",
           body: formData,
         })
           .then((res) => res.json())
-          .then((data) => setmeme(data.data.url));
-      }
+          .then((data) => {
+            console.log(data)
+            setmeme(data?.data?.url)});
+
 
   };
   //download the meme
@@ -95,9 +95,9 @@ const Memes = ({ page, setpage }) => {
   if (meme) {
     return (
       <div style={{ textAlign: "center" }}>
-        <img src={meme} style={{ width: "200" }} />
+        <img src={meme} style={{ width: "200" }} alt="a meme " />
         <a href={meme} onClick={download}>
-          <button class="rounded bg-green-300 py-2 px-4 text-lg font-normal text-white">Download </button>
+          <button class="rounded bg-green-300 py-2 px-4 text-lg font-normal text-white hover:bg-green-500 duration-200 ease-linear ">Download </button>
         </a>
       </div>
     );
