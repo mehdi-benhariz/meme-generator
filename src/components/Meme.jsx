@@ -1,6 +1,6 @@
 import React from "react";
 
-const Meme = ({ template, settemplate }) => {
+const Meme = ({ template }) => {
   return (
     <div>
       <img

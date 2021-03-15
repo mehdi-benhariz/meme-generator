@@ -2,18 +2,12 @@ import React, { useState, useEffect } from "react";
 import { usePaginatedQuery } from "react-query";
 import Meme from "./Meme";
 
-const objectToqueryParam = (obj) => {
-  const params = Object.entries(obj).map(([key, value]) => `${key}=${value}`);
-  return "?" + params.join("&");
-};
-
 const Memes = ({ page, setpage }) => {
-  const [templates, settemplates] = useState()
-  const [template, settemplate] = useState(null)
-  const [topText, settopText] = useState("")
-  const [bottomText, setbottomText] = useState("")
-  const [meme, setmeme] = useState(null)
-const [boxes, setboxes] = useState([])
+  const [templates, settemplates] = useState([]);
+  const [template, settemplate] = useState(null);
+  const [meme, setmeme] = useState(null);
+  const [memeIndex, setMemeIndex] = useState(0);
+  const [captions, setCaptions] = useState([]);
 
   const input = `bg-gray-200 rounded w-auto px-3 py-1 hover:shadow-xl transform ease-linear duration-150 
   focus:bg-white border-transparent focus:border-blue-400 border-2 outline-none w-full mb-2 mr-4`;
@@ -22,13 +16,14 @@ const [boxes, setboxes] = useState([])
     fetch(`https://api.imgflip.com/get_memes`)
       .then((x) => x.json())
       .then((res) => settemplates(res.data.memes));
-
   }, []);
 
+  //a function to fetch meme
   const fetchMeme = async (key, page) => {
     const res = await fetch(`https://api.imgflip.com/get_memes`);
     return res.json();
   };
+  //using hook to fetch memes
   let { resolvedData, latestData, status } = usePaginatedQuery(
     ["Meme", page],
     fetchMeme,
@@ -38,22 +33,36 @@ const [boxes, setboxes] = useState([])
     }
   );
 
-  //submit form
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const params = {
-      template_id: template.id,
-      text0: topText,
-      text1: bottomText,
-      username: process.env.REACT_APP_IMGFLIP_USERNAME,
-      password: process.env.REACT_APP_IMGFLIP_PASSWORD,
-    };
-    const res = await fetch(
-      `https://api.imgflip.com/caption_image${objectToqueryParam(params)}`
+  const updateCaption = (e, index) => {
+    const text = e.target.value || "";
+    setCaptions(
+      captions.map((c, i) => {
+        if (index === i) return text;
+        else return c;
+      })
     );
+  };
 
-    const data = await res.json();
-    setmeme(data.data.url);
+  const generateMeme = (e) => {
+    e.preventDefault();
+    const currentMeme = templates[memeIndex];
+    const formData = new FormData();
+
+    formData.append("username", process.env.REACT_APP_IMGFLIP_USERNAME);
+    formData.append("password", process.env.REACT_APP_IMGFLIP_PASSWORD);
+    formData.append("template_id", currentMeme.id);
+    if(captions.length===0)
+    console.log("")
+      else{
+        captions.forEach((c, index) => formData.append(`boxes[${index}][text]`, c));
+        fetch("https://api.imgflip.com/caption_image", {
+          method: "POST",
+          body: formData,
+        })
+          .then((res) => res.json())
+          .then((data) => setmeme(data.data.url));
+      }
+
   };
   //download the meme
   const download = (e) => {
@@ -75,70 +84,80 @@ const [boxes, setboxes] = useState([])
         console.log(err);
       });
   };
-  ///////////////////
+  //return to meme list
   const returnOriginal = () => settemplate(null);
-  //////////////////
+  //reset captions
+  useEffect(() => {
+    if (templates.length)
+      setCaptions(Array(templates[memeIndex].box_count).fill(""));
+  }, [memeIndex, templates]);
+
   if (meme) {
     return (
       <div style={{ textAlign: "center" }}>
         <img src={meme} style={{ width: "200" }} />
         <a href={meme} onClick={download}>
-          <button class="rounded bg-green-300 py-2 px-4">Download </button>
+          <button class="rounded bg-green-300 py-2 px-4 text-lg font-normal text-white">Download </button>
         </a>
       </div>
     );
   }
+
   return (
     <div>
       {status === "error" && <div> error</div>}
-      {status === "loading" && <div class="text-xl text-gray-400 font-bold" > loading....</div>}
+      {status === "loading" && (
+        <div class="text-xl text-gray-400 font-bold"> loading....</div>
+      )}
       {status === "success" && (
         <div>
           {template && (
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={generateMeme}>
               <button
                 onClick={returnOriginal}
-                class="bg-red-400 py-2 px-4 rounded text-lg font-bold text-white hover:bg-red-600 ml-3"
+                class="bg-red-400 py-2 px-4 mb-2 rounded text-lg font-bold text-white hover:bg-red-600 ml-3"
               >
                 Return{" "}
               </button>
               <Meme template={template} />
               <div class={`grid grid-rows-${template.box_count}`}>
-            
-              {[...Array(template.box_count+1).keys()].slice(1).map((i) => {
-                console.log(i)
-                return (
-                  <input
-                    class={input}
-                    label="buttom text"
-                    onChange={(e) => setbottomText(e.target.value)}
-                    id="input"
-                  />
-                );
-              })}
-               </div>
+                {[...Array(template.box_count + 1).keys()].slice(1).map((i) => {
+                  return (
+                    <input
+                    key={i}
+                      class={input}
+                      label="buttom text"
+                      onChange={(e) => updateCaption(e, i-1)}
+                      id="input"
+                    />
+                  );
+                })}
+              </div>
 
               <button
                 type="submit"
                 class="bg-blue-400 py-2 px-4 rounded text-lg font-bold text-white hover:bg-blue-600 ml-3 mb-2"
+                onClick={(e) => generateMeme(e)}
               >
                 Create Meme
               </button>
             </form>
           )}
-          {resolvedData.success &&
-            resolvedData.data.memes.map((template) => {
-              console.log(resolvedData.data.memes)
+          {!template &&
+            resolvedData.data.memes.map((template, i) => {
               return (
-                <div   onClick={()=> settemplate(template)}
+                <div
+                  onClick={() => {
+                    settemplate(template);
+                    setMemeIndex(i);
+                  }}
                 >
-                <Meme
-                  key={template.id}
-                  template={template}
-                  returnOriginal={returnOriginal}
-                />
+                  <Meme
+                    key={template.id}
+                    template={template}
+                    returnOriginal={returnOriginal}
+                  />
                 </div>
-
               );
             })}
         </div>
@@ -148,3 +167,4 @@ const [boxes, setboxes] = useState([])
 };
 
 export default Memes;
+///aux
